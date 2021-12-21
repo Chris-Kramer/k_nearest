@@ -1,7 +1,6 @@
 """
-Excersise in k-nearest neighbours, it doesn't quite work yet, but I think it is close
+Excersise in k-nearest neighbours, it is quite slow, so there is room for improvement
 """
-
 import random
 import matplotlib.pyplot as plt
 import math
@@ -69,46 +68,49 @@ def show_clusters(clusters):
 
     
 def k_mean(data, k):
-    # Select k random entries of the data to be centroids
-    centroids = random.sample(data, k)
-    # Set points to be centroids and create list of clusters
-    for centroid in centroids:
-        centroid._centroid = True
-    clusters =  [[centroid] for centroid in centroids] 
-
     # Assign all entries to the cluster with the closest centroid
     def create_clusters(centroids):
+        clusters =  [[centroid] for centroid in centroids] 
         for p in data:
             distances = []
             for centroid in centroids:
                 distances.append(centroid.distance_to(p))
             clusters[distances.index(min(distances))].append(p)
-    create_clusters(centroids)
-    show_clusters(clusters)
+        return clusters
 
-    # Check which point in each cluster is closest to the center
-    i = 0 # For getting the centroid
-    for cluster in clusters:
-        x_coords = [p.get_x() for p in cluster]
-        y_coords = [p.get_y() for p in cluster]
-        
-        # Get center coordinates
-        center_x = int(math.sqrt((max(x_coords) - min(x_coords))**2) / 2)
-        center_y = int(math.sqrt((max(y_coords) - min(y_coords))**2) / 2)
-        center_point = Point(center_x, center_y)
-        # Test and change centroid
-        for p in cluster:
-            if p.distance_to(center_point) < centroids[i].distance_to(center_point):
-                   centroids[i]._centroid = False
-                   p._centroid = True
-                   centroids[i] = p
-                   create_clusters(centroids)
-                   show_clusters(clusters)
-        i += 1
+    def nearest_n(clusters, centroids):
+        # Check which point in each cluster is closest to the center
+        i = 0 # For getting the centroid
+        for cluster in clusters:
+            x_coords = [p.get_x() for p in cluster]
+            y_coords = [p.get_y() for p in cluster]
+            
+            # Get center coordinates
+            center_x = int(math.sqrt((max(x_coords) - min(x_coords))**2) / 2) + min(x_coords)
+            center_y = int(math.sqrt((max(y_coords) - min(y_coords))**2) / 2) + min(y_coords)
+            center_point = Point(center_x, center_y)
+            # Test and change centroid
+            for p in cluster:
+                if p.distance_to(center_point) < centroids[i].distance_to(center_point):
+                    centroids[i]._centroid = False
+                    p._centroid = True
+                    centroids[i] = p
+                    clusters = create_clusters(centroids)
+                    nearest_n(clusters, centroids)
+            i += 1
+            return clusters
+    # Select k random entries of the data to be centroids
+    centroids = random.sample(data, k)
+    # Set points to be centroids and create list of clusters
+    for centroid in centroids:
+        centroid._centroid = True
+    # Create clusters 
+    clusters = create_clusters(centroids)
+    nearest_n(clusters, centroids)
+    show_clusters(clusters)
 
 
 if __name__ == "__main__":
-    data = random_points(100,20,20)
-    print(k_mean(data,5))
-
+    data = random_points(100,100,600)
+    k_mean(data,5)
 
